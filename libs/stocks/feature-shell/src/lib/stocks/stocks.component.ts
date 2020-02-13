@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { PriceQueryFacade } from '@coding-challenge/stocks/data-access-price-query';
 
 @Component({
@@ -11,6 +11,8 @@ export class StocksComponent implements OnInit {
   stockPickerForm: FormGroup;
   symbol: string;
   period: string;
+
+  maxDate = new Date();
 
   quotes$ = this.priceQuery.priceQueries$;
 
@@ -27,8 +29,9 @@ export class StocksComponent implements OnInit {
 
   constructor(private fb: FormBuilder, private priceQuery: PriceQueryFacade) {
     this.stockPickerForm = fb.group({
-      symbol: [null, Validators.required],
-      period: [null, Validators.required]
+      'symbol': new FormControl('',  [Validators.required]),
+      'startDate': new FormControl('', [Validators.required]),
+      'endDate': new FormControl('', [Validators.required])
     });
   }
 
@@ -36,8 +39,14 @@ export class StocksComponent implements OnInit {
 
   fetchQuote() {
     if (this.stockPickerForm.valid) {
-      const { symbol, period } = this.stockPickerForm.value;
-      this.priceQuery.fetchQuote(symbol, period);
+      const startDate = this.stockPickerForm.get('startDate').value;
+      const endDate = this.stockPickerForm.get('endDate').value;
+      const symbol = this.stockPickerForm.get('symbol').value;
+      const period = 'max';
+      if (startDate.getTime() > endDate.getTime() ){
+        this.stockPickerForm.get('endDate').setValue(startDate);
+      }
+      this.priceQuery.fetchQuote(symbol, period, startDate, endDate);
     }
   }
 }
